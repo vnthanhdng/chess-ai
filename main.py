@@ -22,7 +22,7 @@ def print_board(board: chess.Board):
             else:
                 symbol = piece.symbol()
                 # white pieces uppercase, black pieces lowercase
-                row += f" {symbol}"
+                row += f"{symbol} "
         print(row + f"|{rank + 1}")
     print("  " + "-" * 16)
     print("  a b c d e f g h\n")
@@ -105,8 +105,8 @@ def play_game():
     print("Type 'help' for commands.")
     
     ai_depth = 3
-    
-    print("Choose difficulty level:")
+
+    print("Choose difficulty level: (1-4)")
     print("1. Easy (depth 2)")
     print("2. Medium (depth 3)")
     print("3. Hard (depth 4)")
