@@ -41,18 +41,25 @@ def test_knight_center_vs_edge():
     board_center.set_piece_at(chess.E1, chess.Piece(chess.KING, chess.WHITE))
     board_center.set_piece_at(chess.D4, chess.Piece(chess.KNIGHT, chess.WHITE))
     board_center.set_piece_at(chess.E8, chess.Piece(chess.KING, chess.BLACK))
+    # Add pawns to prevent is_insufficient_material()
+    board_center.set_piece_at(chess.A2, chess.Piece(chess.PAWN, chess.WHITE))
+    board_center.set_piece_at(chess.A7, chess.Piece(chess.PAWN, chess.BLACK))
+
     
     # Knight on a1 (edge)
     board_edge = chess.Board(None)
     board_edge.set_piece_at(chess.E1, chess.Piece(chess.KING, chess.WHITE))
     board_edge.set_piece_at(chess.A1, chess.Piece(chess.KNIGHT, chess.WHITE))
     board_edge.set_piece_at(chess.E8, chess.Piece(chess.KING, chess.BLACK))
+    # Add the same pawns
+    board_edge.set_piece_at(chess.A2, chess.Piece(chess.PAWN, chess.WHITE))
+    board_edge.set_piece_at(chess.A7, chess.Piece(chess.PAWN, chess.BLACK))
     
     score_center = evaluate(board_center)
     score_edge = evaluate(board_edge)
     
     assert score_center > score_edge, f"Center knight should be better. Center: {score_center}, Edge: {score_edge}"
-    print("Knight center vs edge test passed")
+    print(f"Knight center vs edge test passed (Center: {score_center}, Edge: {score_edge})")
 
 
 def test_checkmate_white_wins():
@@ -83,12 +90,15 @@ def test_checkmate_black_wins():
 
 def test_stalemate():
     """Stalemate should return 0 (draw)"""
-    # Create a stalemate position
+    # Create an actual stalemate position
+    # King on a8, Queen on b6 (blocking), King on c6 - Black to move
     board = chess.Board(None)
     board.set_piece_at(chess.A8, chess.Piece(chess.KING, chess.BLACK))
-    board.set_piece_at(chess.A6, chess.Piece(chess.QUEEN, chess.WHITE))
-    board.set_piece_at(chess.C7, chess.Piece(chess.KING, chess.WHITE))
-    board.turn = chess.BLACK  # Black to move - stalemate
+    board.set_piece_at(chess.B6, chess.Piece(chess.QUEEN, chess.WHITE))
+    board.set_piece_at(chess.C6, chess.Piece(chess.KING, chess.WHITE))
+    board.turn = chess.BLACK  # Black to move
+    
+    assert board.is_stalemate(), "Test position should be stalemate"
     
     score = evaluate(board)
     assert score == 0, f"Stalemate should be 0, got {score}"
@@ -169,7 +179,7 @@ def test_piece_square_symmetry():
     piece_black = chess.Piece(chess.KNIGHT, chess.BLACK)
     value_black = get_piece_square_value(piece_black, chess.D5)
     
-    assert value_white == -value_black, f"Piece-square values should be symmetric. White: {value_white}, Black: {value_black}"
+    assert value_white == value_black, f"Piece-square values should be symmetric. White: {value_white}, Black: {value_black}"
     print("Piece-square symmetry test passed")
 
 

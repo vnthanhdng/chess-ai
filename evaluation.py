@@ -19,12 +19,12 @@ PIECE_VALUES = {
 
 PAWN_TABLE = [
     [0,   0,   0,   0,   0,   0,   0,   0],
-    [50,  50,  50,  50,  50,  50,  50,  50],
-    [10,  10,  20,  30,  30,  20,  10,  10],
-    [5,   5,  10,  25,  25,  10,   5,   5],
-    [0,   0,   0,  20,  20,   0,   0,   0],
-    [5,  -5, -10,   0,   0, -10,  -5,   5],
     [5,  10,  10, -20, -20,  10,  10,   5],
+    [5,  -5, -10,   0,   0, -10,  -5,   5],
+    [0,   0,   0,  20,  20,   0,   0,   0],
+    [5,   5,  10,  25,  25,  10,   5,   5],
+    [10,  10,  20,  30,  30,  20,  10,  10],
+    [50,  50,  50,  50,  50,  50,  50,  50],
     [0,   0,   0,   0,   0,   0,   0,   0]
 ]
 
@@ -165,7 +165,7 @@ def get_piece_square_value(piece: chess.Piece, square: chess.Square, endgame=Fal
         return 0
 
     value = table[rank][file]
-    return value if piece.color == chess.WHITE else -value
+    return value
 
 
 def evaluate(board: chess.Board) -> int:
@@ -178,12 +178,12 @@ def evaluate(board: chess.Board) -> int:
     Returns:
         int: Score is in centipawns. (positive = white advantage, negative = black advantage)
     """
+    if board.is_stalemate() or board.is_insufficient_material():
+        return 0 # zero sum -> draw
+    
     # Check for game ending condition
     if board.is_checkmate():
         return -20000 if board.turn == chess.WHITE else 20000
-    
-    if board.is_stalemate() or board.is_insufficient_material():
-        return 0 # zero sum -> draw
     
     engame = is_endgame(board)
     score = 0
