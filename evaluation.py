@@ -11,7 +11,7 @@ piece_values = {
     chess.KING: 20000 # Essentially infinite
 }
 
-def evaluate(board):
+def evaluate(board: chess.Board) -> int:
     """
     Evaluate the current board position.
     
@@ -30,7 +30,7 @@ def evaluate(board):
     
     return count_material(board)
 
-def count_material(board):
+def count_material(board: chess.Board) -> int:
     """
     Count material balance on the board.
     
