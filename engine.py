@@ -18,7 +18,7 @@ def find_best_move(board: chess.Board, depth: int) -> chess.Move:
     # Try all legal moves
     for move in board.legal_moves:
         board.push(move)
-        move_value = minimax(board, depth - 1, board.turn == chess.BLACK)
+        move_value = minimax(board, depth - 1, board.turn == chess.WHITE)
         
         board.pop()
         
