@@ -51,7 +51,7 @@ def find_best_move_alpha_beta(board: chess.Board, depth: int) -> chess.Move:
 
     for move in board.legal_moves:
         board.push(move)
-        move_value = alpha_beta(board, depth - 1, alpha, beta, board.turn == chess.BLACK)
+        move_value = alpha_beta(board, depth - 1, alpha, beta, board.turn == chess.WHITE)
         board.pop()
 
         if board.turn == chess.WHITE:
