@@ -3,7 +3,9 @@
 A small command-line chess engine written in Python. It plays against you as Black using minimax with alpha–beta pruning and a simple evaluation function based on piece values and piece-square tables.
 
 Team: Van Dang, Eli Jiang, Vivian Ma, Jaime Park
-Course: CS4260 - Artificial Intelligence
+
+Course: Fall 2025, CS4260 - Artificial Intelligence
+
 Vandebilt University
 
 ### Features
