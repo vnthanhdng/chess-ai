@@ -1,5 +1,10 @@
 import chess
-from evaluation import evaluate, count_material, get_piece_square_value, is_endgame
+import pathlib
+import sys
+project_root = pathlib.Path(__file__).resolve().parents[1]
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+from src.evaluation import evaluate, is_endgame, get_piece_square_value
 
 
 def test_starting_position():
