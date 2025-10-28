@@ -1,73 +1,77 @@
-## Chess
+## Chess AI
 
-A small command-line chess engine written in Python. It plays against you as Black using minimax with alpha–beta pruning and a simple evaluation function based on piece values and piece-square tables.
+A Python chess library and command-line engine for experimenting with search algorithms, evaluation functions, and simple reinforcement/puzzle workflows. The codebase is modular so you can run the CLI game or plug in different agent implementations for agent battling.
 
 Team: Van Dang, Eli Jiang, Vivian Ma, Jaime Park
+Course: CS 4260 - Fall 2025 - Vanderbilt University
 
-Course: Fall 2025, CS4260 - Artificial Intelligence
+### Highlights
 
-Vandebilt University
-
-### Features
-
-- Minimax search with optional alpha–beta pruning
-- Heuristic evaluation in centipawns (material + piece-square tables, basic endgame awareness)
-- Adjustable difficulty (search depth 2–5)
-- Play from the terminal as White; engine moves as Black
-- Handy commands during play: `moves`, `undo`, `help`, `quit`
-- Simple test scripts for engine and evaluation
+- Search algorithms: Minimax, Minimax with alpha–beta pruning, Expectimax (in `src/search/`)
+- Pluggable agents: human and search agents (see `src/agents/`)
+- Evaluation: piece values + piece-square tables, with basic endgame awareness (`src/evaluation/`)
+- Extra modules: puzzles, reinforcement experiments, simple tournament harnesses, and visualization helpers
+- CLI for quick play and testing; small unit tests under `tests/`
 
 ## Requirements
 
 - Python 3.9+ (tested locally)
-- Dependency: `python-chess`
+- Dependencies are listed in `requirements.txt` (includes `python-chess`)
 
 ## Setup
 
+Create a virtual environment and install the project dependencies:
+
 ```bash
-# (optional) create and activate a virtual environment
+# macOS / zsh example
 python3 -m venv .venv
 source .venv/bin/activate
-
-# install dependency
-pip install python-chess
+pip install -r requirements.txt
 ```
 
-## Run the game
+## Run the CLI game
 
 ```bash
 python main.py
 ```
 
-You will be prompted to choose a difficulty (search depth). Enter moves in UCI (e.g., `e2e4`) or SAN (e.g., `e4`, `Nf3`) format.
+The CLI is interactive. It will prompt for agent settings (engine depth, engine type, which side to play) depending on the configuration. You can enter moves in UCI (e.g., `e2e4`) or SAN (e.g., `e4`, `Nf3`).
 
-During the game you can type:
+During play you can use these commands:
 
 - `moves` — list all legal moves
-- `undo` — take back your last move and the engine’s reply
+- `undo` — take back the last pair of moves (your move + engine reply)
 - `help` — show command help
 - `quit` — exit the game
 
-## Run tests
+## Running tests
 
-The project includes lightweight test scripts. Run them directly:
+There are lightweight unit tests in `tests/` to validate agents and evaluation. Run them with pytest (recommended):
 
 ```bash
-python test_evaluation.py
-python test_engine.py
+pytest -q
 ```
 
-## Project structure
+You can also run the legacy test scripts directly:
 
-- `main.py` — CLI game loop and board printing
-- `engine.py` — minimax and alpha–beta search (`find_best_move`, `find_best_move_alpha_beta`)
-- `evaluation.py` — evaluation function with piece-square tables and basic endgame detection
-- `utils.py` — helpers (placeholder)
-- `test_engine.py` — engine behavior checks
-- `test_evaluation.py` — evaluation function checks
+```bash
+python test_engine.py
+python test_evaluation.py
+```
 
-## Notes
+## Project layout (key files)
 
-- Search depth heavily impacts strength and speed; higher depth means slower but stronger play.
-- Evaluation is intentionally simple; feel free to tweak piece-square tables or add heuristics (mobility, king safety, pawn structure, etc.).
+- `main.py` — CLI entrypoint and interactive loop
+- `engine.py` (legacy) — reference search implementations and helpers
+- `evaluation.py` (legacy) — standalone evaluation function and piece-square tables
+- `utils.py` — general helpers used by CLI and tests
+- `src/agents/` — agent implementations (human, search-based agents, and learning agents)
+- `src/search/` — search algorithm implementations (minimax, alphabeta, expectimax)
+- `src/evaluation/` — modular evaluators and piece-square tables
+- `tests/` — unit tests for agents, search, and evaluation
+
+## License
+
+This repository uses an MIT-style license. See `LICENSE` if included.
+
 
