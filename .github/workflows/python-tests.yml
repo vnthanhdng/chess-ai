@@ -25,12 +25,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install python-chess
+        pip install -r requirements.txt
 
+    - name: Run search tests
+      run: cd tests && python test_search.py
+    
+    - name: Run agent tests
+      run: cd tests && python test_agents.py
+    
     - name: Run evaluation tests
-      run: |
-        python test_evaluation.py
-
-    - name: Run engine tests
-      run: |
-        python test_engine.py
+      run: cd tests && python test_evaluation.py
