@@ -1,5 +1,5 @@
 from .base_agent import BaseAgent
-from ..search import SearchAlgorithm, MiniMaxSearch, AlphaBetaSearch
+from ..search import SearchAlgorithm, MiniMaxSearch, AlphaBetaSearch, ExpectimaxSearch
 import chess
 
 class SearchAgent(BaseAgent):
@@ -71,4 +71,19 @@ class AlphaBetaAgent(SearchAgent):
             color: Color the agent plays
         """
         search_algorithm = AlphaBetaSearch(evaluator)
+        super().__init__(search_algorithm, depth, name, color)
+
+class ExpectimaxAgent(SearchAgent):
+    """Agent that uses Expectimax search algorithm."""
+    
+    def __init__(self, evaluator, depth: int = 3, name: str = "ExpectimaxAgent", color: chess.Color = chess.BLACK):
+        """Initialize Expectimax agent.
+        
+        Args:
+            evaluator: Board evaluation function
+            depth: Search depth in plies
+            name: Agent name
+            color: Color the agent plays
+        """
+        search_algorithm = ExpectimaxSearch(evaluator)
         super().__init__(search_algorithm, depth, name, color)
