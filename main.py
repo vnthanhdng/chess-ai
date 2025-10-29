@@ -2,8 +2,11 @@
 
 import chess
 import chess.svg
+import sys
+import argparse
 from engine import find_best_move_alpha_beta
 from evaluation import evaluate
+from src.agents import MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent
 
 def print_board(board: chess.Board):
     """ Print the chess board in a readable format. """
@@ -94,32 +97,28 @@ def get_human_move(board: chess.Board) -> chess.Move:
             print("Invalid move format. Try again.")
             print("Example: e2e4 or Nf3")
             
-def play_game():
+def play_game(agent_name="alphabeta", ai_depth=3):
     """ Main game loop. """
     board = chess.Board()
+    
+    # Create the AI agent
+    if agent_name.lower() == "minimax":
+        ai_agent = MinimaxAgent(evaluate, depth=ai_depth, name="MinimaxAI", color=chess.BLACK)
+    elif agent_name.lower() == "alphabeta":
+        ai_agent = AlphaBetaAgent(evaluate, depth=ai_depth, name="AlphaBetaAI", color=chess.BLACK)
+    elif agent_name.lower() == "expectimax":
+        ai_agent = ExpectimaxAgent(evaluate, depth=ai_depth, name="ExpectimaxAI", color=chess.BLACK)
+    else:
+        print(f"Unknown agent: {agent_name}")
+        print("Available agents: minimax, alphabeta, expectimax")
+        return
     
     print("=" * 50)
     print("Welcome to Chess AI!")
     print("=" * 50)
+    print(f"AI Agent: {ai_agent.name} (depth {ai_depth})")
     print("You are playing as White. Enter moves in UCI (e2e4) or SAN (e4, Nf3) format.")
     print("Type 'help' for commands.")
-    
-    ai_depth = 3
-
-    print("Choose difficulty level: (1-4)")
-    print("1. Easy (depth 2)")
-    print("2. Medium (depth 3)")
-    print("3. Hard (depth 4)")
-    print("4. Expert (depth 5)")
-    
-    while True:
-        difficulty = input("> ").strip()
-        if difficulty in ['1', '2', '3', '4']:
-            ai_depth = int(difficulty) + 1
-            break
-        else:
-            print("Invalid choice. Please enter 1, 2, 3, or 4.")
-    
     print()
     
     move_number = 1
@@ -152,7 +151,7 @@ def play_game():
             print(f"Move {move_number}. AI's turn (Black). Thinking...")
             import time
             start_time = time.time()
-            ai_move = find_best_move_alpha_beta(board, ai_depth)
+            ai_move = ai_agent.choose_move(board)
             elapsed = time.time() - start_time
             
             if ai_move is None:
@@ -161,6 +160,10 @@ def play_game():
             move_san = board.san(ai_move)
             board.push(ai_move)
             print(f"AI played: {move_san}")
+            
+            # Show AI stats
+            stats = ai_agent.get_search_info()
+            print(f"AI searched {stats['nodes_searched']} nodes in {elapsed:.2f}s")
             move_number += 1
     
     print_board(board)
@@ -186,5 +189,43 @@ def play_game():
     print()
 
 
+def main():
+    """Main entry point with command line argument parsing."""
+    parser = argparse.ArgumentParser(description="Play chess against different AI agents")
+    parser.add_argument("--agent", "-a", 
+                       choices=["minimax", "alphabeta", "expectimax"],
+                       default="alphabeta",
+                       help="AI agent to play against (default: alphabeta)")
+    parser.add_argument("--depth", "-d",
+                       type=int,
+                       choices=[2, 3, 4, 5],
+                       default=3,
+                       help="Search depth for AI (default: 3)")
+    parser.add_argument("--interactive", "-i",
+                       action="store_true",
+                       help="Interactive difficulty selection (overrides --depth)")
+    
+    args = parser.parse_args()
+    
+    if args.interactive:
+        print("Choose difficulty level: (1-4)")
+        print("1. Easy (depth 2)")
+        print("2. Medium (depth 3)")
+        print("3. Hard (depth 4)")
+        print("4. Expert (depth 5)")
+        
+        while True:
+            difficulty = input("> ").strip()
+            if difficulty in ['1', '2', '3', '4']:
+                depth = int(difficulty) + 1
+                break
+            else:
+                print("Invalid choice. Please enter 1, 2, 3, or 4.")
+    else:
+        depth = args.depth
+    
+    play_game(agent_name=args.agent, ai_depth=depth)
+
+
 if __name__ == "__main__":
-    play_game()
+    main()

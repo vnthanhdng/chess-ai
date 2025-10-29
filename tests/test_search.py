@@ -110,7 +110,8 @@ def test_expectimax_searches_all_nodes():
     print(f"Expectimax searches all nodes (no pruning): {expectimax.nodes_searched}")
 
 def test_expectimax_more_optimistic():
-    """Expectimax score should be optimistic (better than minimax's pessimistic assumption)."""
+    """Expectimax should be more optimistic than minimax when either BLACK or WHITE is the agent."""
+    # White to move
     board = chess.Board()
     
     minimax = MiniMaxSearch(evaluate)
@@ -119,14 +120,20 @@ def test_expectimax_more_optimistic():
     _, minimax_score = minimax.search(board, depth=3)
     _, expectimax_score = expectimax.search(board, depth=3)
     
-    # For white's turn: expectimax should be >= minimax (more optimistic)
-    if board.turn == chess.WHITE:
-        assert expectimax_score >= minimax_score, \
-            f"Expectimax should be >= minimax for white: {expectimax_score} vs {minimax_score}"
-    else:
-        assert expectimax_score <= minimax_score, \
-            f"Expectimax should be <= minimax for black: {expectimax_score} vs {minimax_score}"
-    print("Expectimax score within expected bounds")
+    # White maximizes: expectimax should be >= minimax (assumes opponent plays randomly)
+    assert expectimax_score >= minimax_score, \
+        f"Expectimax should be >= minimax for WHITE: {expectimax_score:.2f} vs {minimax_score}"
+    print(f"Expectimax more optimistic for WHITE: {expectimax_score:.2f} >= {minimax_score}")
+
+    # Black to move
+    board.push(chess.Move.from_uci('e2e4'))  
+    _, minimax_score = minimax.search(board, depth=3)
+    _, expectimax_score = expectimax.search(board, depth=3)
+
+    # Black minimizes: expectimax should be <= minimax (more optimistic for black = lower score)
+    assert expectimax_score <= minimax_score, \
+        f"Expectimax should be <= minimax for BLACK: {expectimax_score:.2f} vs {minimax_score}"
+    print(f"Expectimax more optimistic for BLACK: {expectimax_score:.2f} <= {minimax_score}")
 
 def run_all_tests():
     print("\n" + "="*50)
