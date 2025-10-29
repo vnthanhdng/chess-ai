@@ -30,29 +30,35 @@ class ExpectimaxSearch(SearchAlgorithm):
         """
         self.reset_stats()
         best_move = None
-        best_value = float('-inf')
+        best_value = float('-inf') if board.turn == chess.WHITE else float('inf')
+        agent_color = board.turn  # chess.BLACK in main loop
         
         for move in board.legal_moves:
             board.push(move)
-            # After our move, opponent's turn is a chance node
-            move_value = self._expectimax(board, depth - 1, False)
+            move_value = self._expectimax(board, depth - 1, True, agent_color)
             board.pop()
             
-            if move_value > best_value:
-                best_value = move_value
-                best_move = move
+            if agent_color == chess.WHITE:
+                if move_value > best_value:
+                    best_value = move_value
+                    best_move = move
+            else:
+                if move_value < best_value:
+                    best_value = move_value
+                    best_move = move
         
         return best_move, best_value
     
-    def _expectimax(self, board: chess.Board, depth: int, is_max_node: bool) -> float:
+    def _expectimax(self, board: chess.Board, depth: int, is_chance_node: bool, agent_color: chess.Color) -> float:
         """
         Expectimax recursive implementation.
         
         Args:
             board: Current board state
             depth: Remaining search depth
-            is_max_node: True if this is a maximizing node (our turn), 
-                        False if chance node (opponent's turn)
+            is_chance_node: True if this is a chance node (opponent's turn), 
+                           False if this is an optimal node (our turn)
+            agent_color: The color of the player we're optimizing for
             
         Returns:
             float: Evaluation score
@@ -62,17 +68,8 @@ class ExpectimaxSearch(SearchAlgorithm):
         if depth == 0 or board.is_game_over():
             return self.evaluator(board)
         
-        if is_max_node:
-            # Maximizing node: choose the best move
-            max_eval = float('-inf')
-            for move in board.legal_moves:
-                board.push(move)
-                eval_score = self._expectimax(board, depth - 1, False)
-                board.pop()
-                max_eval = max(max_eval, eval_score)
-            return max_eval
-        else:
-            # Chance node: take average of all possible moves
+        # chance node — assume random play
+        if is_chance_node:
             legal_moves = list(board.legal_moves)
             if not legal_moves:
                 return self.evaluator(board)
@@ -80,9 +77,27 @@ class ExpectimaxSearch(SearchAlgorithm):
             total_eval = 0.0
             for move in legal_moves:
                 board.push(move)
-                eval_score = self._expectimax(board, depth - 1, True)
+                eval_score = self._expectimax(board, depth - 1, False, agent_color) # opponent plays optimally
                 board.pop()
                 total_eval += eval_score
             
             return total_eval / len(legal_moves)
+        # optimal node
+        else:
+            if agent_color == chess.WHITE: # white - maximize
+                max_eval = float('-inf')
+                for move in board.legal_moves:
+                    board.push(move)
+                    eval_score = self._expectimax(board, depth - 1, True, agent_color) # opponent plays chance
+                    board.pop()
+                    max_eval = max(max_eval, eval_score)
+                return max_eval
+            else: # black - minimize
+                min_eval = float('inf')
+                for move in board.legal_moves:
+                    board.push(move)
+                    eval_score = self._expectimax(board, depth - 1, True, agent_color) # opponent plays chance
+                    board.pop()
+                    min_eval = min(min_eval, eval_score)
+                return min_eval
 
