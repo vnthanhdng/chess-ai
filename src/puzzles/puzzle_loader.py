@@ -85,7 +85,7 @@ class PuzzleLoader:
             rating_deviation=int(row["RatingDeviation"]),
             popularity=int(row["Popularity"]),
             nb_plays=int(row["NbPlays"]),
-            themes=row["Themes"].split(","),
+            themes=row["Themes"].split(" "),
             game_url=row["GameUrl"]
         )
         
