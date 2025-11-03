@@ -146,7 +146,7 @@ class PuzzleLoader:
                 rating_min = min(rating_min, rating)
                 rating_max = max(rating_max, rating)
                 
-                themes = row["Themes"].split(",")
+                themes = row["Themes"].split(" ")
                 all_themes.update(themes)
                 
         return {
