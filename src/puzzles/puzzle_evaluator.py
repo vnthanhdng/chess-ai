@@ -147,3 +147,197 @@ class EvaluationReport:
             if not result.solved:
                 print(f"  FEN: {result.puzzle.fen}")
                 
+class PuzzleEvaluator:
+    """
+    Evaluates chess agents on puzzle sets.
+    
+    Example usage:
+        >>> evaluator = PuzzleEvaluator()
+        >>> puzzles = loader.load(min_rating=1200, max_rating=1600, limit=50)
+        >>> report = evaluator.evaluate(agent, puzzles, depth=4)
+        >>> report.print_summary()
+    """
+    
+    def __init__(self, verbose: bool = True):
+        """
+        Initialize the evaluator.
+        
+        Args:
+            verbose: If True, print progress during evaluation
+        """
+        self.verbose = verbose
+    
+    def evaluate(
+        self,
+        agent: BaseAgent,
+        puzzles: List[Puzzle],
+        depth: Optional[int] = None
+    ) -> EvaluationReport:
+        """
+        Evaluate an agent on a set of puzzles.
+        
+        Args:
+            agent: Agent to evaluate
+            puzzles: List of puzzles to solve
+            depth: Optional search depth override (for SearchAgent)
+            
+        Returns:
+            EvaluationReport with results and statistics
+        """
+        results = []
+        solved_count = 0
+        
+        if self.verbose:
+            print(f"\nEvaluating {agent.name} on {len(puzzles)} puzzles...")
+            print("-" * 70)
+        
+        original_depth = None
+        if depth is not None and hasattr(agent, 'depth'):
+            original_depth = agent.depth
+            agent.depth = depth
+        
+        for i, puzzle in enumerate(puzzles, 1):
+            if self.verbose and i % 10 == 0:
+                print(f"Progress: {i}/{len(puzzles)} ({solved_count}/{i} solved, "
+                      f"{(solved_count/i)*100:.1f}%)")
+            
+            result = self._evaluate_puzzle(agent, puzzle, depth or getattr(agent, 'depth', 0))
+            results.append(result)
+            
+            if result.solved:
+                solved_count += 1
+        
+        # Restore original depth
+        if original_depth is not None:
+            agent.depth = original_depth
+        
+        report = EvaluationReport(
+            agent_name=agent.name,
+            total_puzzles=len(puzzles),
+            solved=solved_count,
+            results=results,
+            depth=depth or getattr(agent, 'depth', 0)
+        )
+        
+        if self.verbose:
+            report.print_summary()
+        
+        return report
+    
+    def _evaluate_puzzle(
+        self,
+        agent: BaseAgent,
+        puzzle: Puzzle,
+        depth: int
+    ) -> PuzzleResult:
+        """
+        Evaluate an agent on a single puzzle.
+        
+        Args:
+            agent: Agent to evaluate
+            puzzle: Puzzle to solve
+            depth: Search depth
+            
+        Returns:
+            PuzzleResult for this puzzle
+        """
+        # Set up the board
+        board = puzzle.board
+        correct_move_uci = puzzle.first_solution_move
+        
+        # Reset agent stats for this puzzle
+        nodes_before = agent.nodes_searched
+        
+        # Time the move selection
+        start_time = time.time()
+        try:
+            move = agent.choose_move(board)
+            time_taken = time.time() - start_time
+        except Exception as e:
+            if self.verbose:
+                print(f"Error solving puzzle {puzzle.puzzle_id}: {e}")
+            return PuzzleResult(
+                puzzle=puzzle,
+                solved=False,
+                agent_move=None,
+                correct_move=correct_move_uci,
+                time_taken=0.0,
+                depth=depth
+            )
+        
+        # Get nodes searched for this puzzle
+        nodes_searched = agent.nodes_searched - nodes_before
+        
+        # Check if the move is correct
+        agent_move_uci = move.uci() if move else None
+        solved = agent_move_uci == correct_move_uci
+        
+        # Get evaluation score if available
+        eval_score = None
+        if hasattr(agent, 'search') and hasattr(agent.search, 'evaluator'):
+            try:
+                board.push(move)
+                eval_score = agent.search.evaluator(board)
+                board.pop()
+            except:
+                pass
+        
+        return PuzzleResult(
+            puzzle=puzzle,
+            solved=solved,
+            agent_move=agent_move_uci,
+            correct_move=correct_move_uci,
+            eval_score=eval_score,
+            nodes_searched=nodes_searched,
+            time_taken=time_taken,
+            depth=depth
+        )
+    
+    def compare_agents(
+        self,
+        agents: List[BaseAgent],
+        puzzles: List[Puzzle],
+        depth: Optional[int] = None
+    ) -> Dict[str, EvaluationReport]:
+        """
+        Compare multiple agents on the same puzzle set.
+        
+        Args:
+            agents: List of agents to compare
+            puzzles: Puzzles to solve
+            depth: Optional search depth override
+            
+        Returns:
+            Dictionary mapping agent names to their reports
+        """
+        reports = {}
+        
+        for agent in agents:
+            print(f"\n{'=' * 70}")
+            print(f"Testing: {agent.name}")
+            print('=' * 70)
+            
+            report = self.evaluate(agent, puzzles, depth)
+            reports[agent.name] = report
+        
+        # Print comparison summary
+        self._print_comparison(reports)
+        
+        return reports
+    
+    def _print_comparison(self, reports: Dict[str, EvaluationReport]):
+        """Print a comparison table of multiple agents."""
+        print("\n" + "=" * 70)
+        print("COMPARISON SUMMARY")
+        print("=" * 70)
+        print(f"{'Agent':<25} {'Solved':<10} {'Rate':<10} {'Avg Time':<12} {'Avg Nodes':<12}")
+        print("-" * 70)
+        
+        for name, report in reports.items():
+            print(f"{name:<25} "
+                  f"{report.solved}/{report.total_puzzles:<10} "
+                  f"{report.solve_rate:.1f}%{'':<6} "
+                  f"{report.avg_time:.3f}s{'':<6} "
+                  f"{report.avg_nodes:,.0f}")
+        
+        print("=" * 70 + "\n")
