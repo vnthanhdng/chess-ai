@@ -80,7 +80,7 @@ class PuzzleLoader:
         return Puzzle(
             puzzle_id=row["PuzzleId"],
             fen=row["FEN"],
-            moves=row["Moves"],
+            moves=row["Moves"].split(" "),
             rating=int(row["Rating"]),
             rating_deviation=int(row["RatingDeviation"]),
             popularity=int(row["Popularity"]),

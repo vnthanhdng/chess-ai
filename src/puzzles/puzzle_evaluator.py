@@ -2,7 +2,7 @@
 import time
 import chess
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from .puzzle import Puzzle
 from ..agents import BaseAgent
 
@@ -21,7 +21,7 @@ class PuzzleResult:
         time_taken: time taken by the agent to select the move (in seconds)
         depth: search depth used by the agent
     """
-    puzzle = Puzzle
+    puzzle: Puzzle
     solved: bool
     agent_move: Optional[str]
     correct_move: str
@@ -54,11 +54,11 @@ class EvaluationReport:
     agent_name: str
     total_puzzles: int
     solved: int
-    results: List[PuzzleResult]
-    avg_time: float
-    avg_nodes: float
-    solve_rate: float
-    depth: Optional[int]
+    results: List[PuzzleResult] = field(default_factory=list)
+    avg_time: float = 0.0
+    avg_nodes: float = 0.0
+    solve_rate: float = 0.0
+    depth: int = 0
     
     def __post_init__(self):
         self.total_puzzles = len(self.results)

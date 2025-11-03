@@ -1,0 +1,11 @@
+PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl
+00008,r6k/pp2r2p/4Rp1Q/3p4/8/1N1P2R1/PqP2bPP/7K b - - 0 24,e7e6 h6h7 h8g8 h7g7,1483,80,88,4633,crushing hangingPiece long middlegame,https://lichess.org/yyznGmXs/black#48
+0000D,5rk1/1p3ppp/pq3b2/8/8/1P1Q1N2/P4PPP/3R2K1 w - - 2 27,d3d8 f8d8,1561,78,89,3936,advantage endgame short,https://lichess.org/F8M8OS69#53
+0000H,r1b1r1k1/5ppp/p1pB4/3p4/8/5N2/PPP2PPP/R1B2RK1 w - - 1 15,d6f8 e8f8,1458,77,95,4574,advantage middlegame short,https://lichess.org/F2VmroBm#29
+0000U,r1bq1rk1/pp3ppp/2n1pn2/3p4/1bPP4/2N1PN2/PP3PPP/R1BQKB1R w KQ - 0 8,c3d5 e6d5 f3b4,1824,79,96,4166,fork middlegame short,https://lichess.org/Yy9ktzF1#15
+0001e,r4rk1/pp2ppbp/3p1np1/q7/2PP4/2N1P1P1/P1Q2PBP/1R3RK1 w - - 1 15,c3b5 a5b5,1352,75,84,3869,advantage hangingPiece middlegame short,https://lichess.org/PxD1V60x#29
+0001j,r1b1kb1r/ppp2ppp/5n2/4N3/2Bp4/8/PPP2PPP/RNBQK2R b KQkq - 1 7,f6e4 c4f7 e8f7,1586,77,88,4214,attraction mateIn2 middlegame sacrifice short,https://lichess.org/JGE5sQSX/black#14
+0002G,8/5pk1/3p2p1/1p2N2p/4P3/1PP2PP1/1P1r3P/R6K b - - 0 40,d2a2,1467,82,81,4158,endgame hangingPiece long,https://lichess.org/PZazFw8b/black#80
+00030,3qr1k1/5pbp/5Qp1/8/8/2B5/5PPP/6K1 w - - 4 28,f6g7,1294,73,90,4263,crushing middlegame oneMove,https://lichess.org/MIbipK7i#55
+00032,r4rk1/1bqnbppp/p2ppn2/1p4B1/3NPP2/2N1B3/PPPQ3P/2KR3R w - - 1 13,g5f6 d7f6 d4e6,1665,77,93,4187,attraction fork middlegame short,https://lichess.org/WXQbPD4s#25
+00037,8/8/5kpp/p7/1pPP1P1K/8/8/8 b - - 0 45,f6f5,1420,76,76,3831,endgame long,https://lichess.org/ZzNKOIV9/black#90
