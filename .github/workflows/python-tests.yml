@@ -35,3 +35,6 @@ jobs:
     
     - name: Run evaluation tests
       run: cd tests && python test_evaluation.py
+    
+    - name: Run puzzle tests
+      run: cd tests && python test_puzzles.py
