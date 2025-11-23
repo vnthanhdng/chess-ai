@@ -6,7 +6,7 @@ import sys
 import argparse
 from engine import find_best_move_alpha_beta
 from evaluation import evaluate
-from src.agents import MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent
+from src.agents import MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent, ValueIterationAgent, QLearningAgent
 
 def print_board(board: chess.Board):
     """ Print the chess board in a readable format. """
@@ -108,6 +108,10 @@ def play_game(agent_name="alphabeta", ai_depth=3):
         ai_agent = AlphaBetaAgent(evaluate, depth=ai_depth, name="AlphaBetaAI", color=chess.BLACK)
     elif agent_name.lower() == "expectimax":
         ai_agent = ExpectimaxAgent(evaluate, depth=ai_depth, name="ExpectimaxAI", color=chess.BLACK)
+    elif agent_name.lower() == "valueiteration":
+        ai_agent = ValueIterationAgent()
+    elif agent_name.lower() == "qlearning":
+        ai_agent = QLearningAgent()
     else:
         print(f"Unknown agent: {agent_name}")
         print("Available agents: minimax, alphabeta, expectimax")
@@ -163,7 +167,7 @@ def play_game(agent_name="alphabeta", ai_depth=3):
             
             # Show AI stats
             stats = ai_agent.get_search_info()
-            print(f"AI searched {stats['nodes_searched']} nodes in {elapsed:.2f}s")
+            # print(f"AI searched {stats['nodes_searched']} nodes in {elapsed:.2f}s")
             move_number += 1
     
     print_board(board)
@@ -193,7 +197,7 @@ def main():
     """Main entry point with command line argument parsing."""
     parser = argparse.ArgumentParser(description="Play chess against different AI agents")
     parser.add_argument("--agent", "-a", 
-                       choices=["minimax", "alphabeta", "expectimax"],
+                       choices=["minimax", "alphabeta", "expectimax", "valueiteration", "qlearning"],
                        default="alphabeta",
                        help="AI agent to play against (default: alphabeta)")
     parser.add_argument("--depth", "-d",
