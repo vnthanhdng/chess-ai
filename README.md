@@ -70,22 +70,6 @@ The GUI provides:
 - Auto-play mode for watching AI vs AI games
 - Undo/reset functionality
 
-You can also use the GUI programmatically:
-```python
-from src.gui import ChessGUI, watch_agents_play
-from src.agents import AlphaBetaAgent, MinimaxAgent
-from evaluation import evaluate
-
-# Simple GUI
-gui = ChessGUI()
-gui.run()
-
-# Watch two agents play
-white = AlphaBetaAgent(evaluate, depth=3, name="AlphaBeta", color=chess.WHITE)
-black = MinimaxAgent(evaluate, depth=3, name="Minimax", color=chess.BLACK)
-watch_agents_play(white, black, move_delay=1.0)
-```
-
 ## Running tests
 
 There are lightweight unit tests in `tests/` to validate agents and evaluation. Run them with pytest (recommended):
