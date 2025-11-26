@@ -44,6 +44,32 @@ During play you can use these commands:
 - `help` — show command help
 - `quit` — exit the game
 
+## Run the GUI
+
+Play chess with a visual board interface:
+
+```bash
+# Play against an AI (default: human vs alphabeta)
+python play_gui.py
+
+# Watch two AIs play against each other
+python play_gui.py --mode watch --white-agent alphabeta --black-agent minimax --depth 3 --delay 1.0
+
+# Play as white against a specific AI
+python play_gui.py --white-agent human --black-agent expectimax --depth 4
+
+# Customize agents and settings
+python play_gui.py --mode watch --white-agent minimax --black-agent alphabeta --depth 3 --delay 0.5
+```
+
+The GUI provides:
+- Visual chess board with Unicode piece symbols
+- Click-to-move or text input for moves
+- Move history display
+- Position evaluation display
+- Auto-play mode for watching AI vs AI games
+- Undo/reset functionality
+
 ## Running tests
 
 There are lightweight unit tests in `tests/` to validate agents and evaluation. Run them with pytest (recommended):
@@ -62,12 +88,14 @@ python test_evaluation.py
 ## Project layout (key files)
 
 - `main.py` — CLI entrypoint and interactive loop
+- `play_gui.py` — GUI entrypoint for visual chess games
 - `engine.py` (legacy) — reference search implementations and helpers
 - `evaluation.py` (legacy) — standalone evaluation function and piece-square tables
 - `utils.py` — general helpers used by CLI and tests
 - `src/agents/` — agent implementations (human, search-based agents, and learning agents)
 - `src/search/` — search algorithm implementations (minimax, alphabeta, expectimax)
 - `src/evaluation/` — modular evaluators and piece-square tables
+- `src/gui/` — tkinter-based GUI for chess visualization
 - `tests/` — unit tests for agents, search, and evaluation
 
 ## License
