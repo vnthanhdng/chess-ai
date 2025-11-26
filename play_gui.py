@@ -48,9 +48,14 @@ def main():
         default=1.0,
         help="Delay between moves in watch mode (seconds, default: 1.0)"
     )
+    parser.add_argument(
+        "--no-graphics",
+        type=bool,
+        default=False,
+        help="Whether to skip rendering the GUI (default, false)"
+    )
     
     args = parser.parse_args()
-    
     # Create agents (None means human player, handled by GUI)
     def create_agent(agent_type, color):
         if agent_type == "human":

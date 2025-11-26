@@ -665,7 +665,6 @@ def watch_agents_play(
                 text=f"Status: {a.name} is thinking..."
             ))
             
-            # Get move from agent
             move = current_agent.choose_move(gui.board)
             
             if move is None:
