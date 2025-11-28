@@ -15,7 +15,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.agents.base_agent import BaseAgent
-from evaluation import evaluate
+from src.evaluation import evaluate
 
 
 class ChessGUI:

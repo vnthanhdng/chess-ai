@@ -4,7 +4,7 @@ import sys
 project_root = pathlib.Path(__file__).resolve().parents[1]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from src.evaluation import evaluate, is_endgame, get_piece_square_value
+from src.evaluation import evaluate, is_endgame, get_piece_square_value, evaluate_pawns, evaluate_king_safety
 
 
 def test_starting_position():
@@ -187,6 +187,65 @@ def test_piece_square_symmetry():
     assert value_white == value_black, f"Piece-square values should be symmetric. White: {value_white}, Black: {value_black}"
     print("Piece-square symmetry test passed")
 
+
+def test_doubled_pawns_penalty():
+    """Doubled pawns should be penalized."""
+    board = chess.Board(None)
+    # White has doubled pawns on E file
+    board.set_piece_at(chess.E2, chess.Piece(chess.PAWN, chess.WHITE))
+    board.set_piece_at(chess.E3, chess.Piece(chess.PAWN, chess.WHITE))
+    
+    board.set_piece_at(chess.E7, chess.Piece(chess.PAWN, chess.BLACK))
+    
+    # Dummy Kings (needed if running full evaluate, but safe to include)
+    board.set_piece_at(chess.A8, chess.Piece(chess.KING, chess.BLACK))
+    board.set_piece_at(chess.H1, chess.Piece(chess.KING, chess.WHITE))
+    
+    score = evaluate_pawns(board, chess.WHITE)
+    assert score < 0, f"Doubled pawns should have negative score, got {score}"
+    print(f"Doubled pawns penalty test passed (Score: {score})")
+
+def test_isolated_pawn_penalty():
+    """Isolated pawns should be penalized."""
+    board = chess.Board(None)
+    # White pawn on D4
+    board.set_piece_at(chess.D4, chess.Piece(chess.PAWN, chess.WHITE))
+    
+    board.set_piece_at(chess.D7, chess.Piece(chess.PAWN, chess.BLACK))
+    
+    board.set_piece_at(chess.A8, chess.Piece(chess.KING, chess.BLACK))
+    board.set_piece_at(chess.H1, chess.Piece(chess.KING, chess.WHITE))
+    
+    score = evaluate_pawns(board, chess.WHITE)
+    assert score < 0, f"Isolated pawn should have negative score, got {score}"
+    print(f"Isolated pawn penalty test passed (Score: {score})")
+
+def test_passed_pawn_bonus():
+    """Passed pawns should receive a bonus."""
+    board = chess.Board(None)
+    # White pawn on E5
+    board.set_piece_at(chess.E5, chess.Piece(chess.PAWN, chess.WHITE))
+    
+    # Black pawn on A7 (far away, does not block E5)
+    board.set_piece_at(chess.A7, chess.Piece(chess.PAWN, chess.BLACK))
+    
+    board.set_piece_at(chess.A8, chess.Piece(chess.KING, chess.BLACK))
+    board.set_piece_at(chess.H1, chess.Piece(chess.KING, chess.WHITE))
+    
+    score = evaluate_pawns(board, chess.WHITE)
+    assert score > 0, f"Passed pawn should have positive score, got {score}"
+    print(f"Passed pawn bonus test passed (Score: {score})")
+
+def run_new_tests():
+    print("\n" + "="*50)
+    print("Running New Pawn Structure Tests")
+    print("="*50 + "\n")
+    test_doubled_pawns_penalty()
+    test_isolated_pawn_penalty()
+    test_passed_pawn_bonus()
+    print("\n" + "="*50)
+    print("Pawn Tests Passed! ✓")
+    print("="*50 + "\n")
 
 def run_all_tests():
     """Run all test functions"""
