@@ -8,12 +8,13 @@ from .search_base import SearchAlgorithm
 class AlphaBetaSearch(SearchAlgorithm):
     """Alpha-beta pruning search algorithm implementation."""
     
-    def __init__(self, evaluator: Callable[[chess.Board], int]):
+    def __init__(self, evaluator: Callable[[chess.Board, int], int]):
         """
         Initialize alpha-beta search.
         
         Args:
             evaluator: Function that evaluates a board position
+                      Should accept (board, ply_from_root) parameters
         """
         super().__init__(evaluator)
     
@@ -36,7 +37,8 @@ class AlphaBetaSearch(SearchAlgorithm):
 
         for move in board.legal_moves:
             board.push(move)
-            move_value = self._alpha_beta(board, depth - 1, alpha, beta, board.turn == chess.WHITE)
+            # Pass ply_from_root=1 since we're one ply from root
+            move_value = self._alpha_beta(board, depth - 1, alpha, beta, board.turn == chess.WHITE, ply_from_root=1)
             board.pop()
 
             if board.turn == chess.WHITE:
@@ -52,7 +54,7 @@ class AlphaBetaSearch(SearchAlgorithm):
 
         return best_move, best_value
     
-    def _alpha_beta(self, board: chess.Board, depth: int, alpha: float, beta: float, maximizing: bool) -> float:
+    def _alpha_beta(self, board: chess.Board, depth: int, alpha: float, beta: float, maximizing: bool, ply_from_root: int) -> float:
         """
         Alpha-beta pruning recursive implementation.
         
@@ -62,6 +64,7 @@ class AlphaBetaSearch(SearchAlgorithm):
             alpha: Alpha value for pruning
             beta: Beta value for pruning
             maximizing: True if maximizing player
+            ply_from_root: Number of plies from the root position
             
         Returns:
             float: Evaluation score
@@ -69,13 +72,14 @@ class AlphaBetaSearch(SearchAlgorithm):
         self.nodes_searched += 1
         
         if depth == 0 or board.is_game_over():
-            return self.evaluator(board)
+            # Pass ply_from_root to evaluator for mate distance scoring
+            return self.evaluator(board, ply_from_root)
 
         if maximizing:
             max_eval = float('-inf')
             for move in board.legal_moves:
                 board.push(move)
-                eval = self._alpha_beta(board, depth - 1, alpha, beta, False)
+                eval = self._alpha_beta(board, depth - 1, alpha, beta, False, ply_from_root + 1)
                 board.pop()
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
@@ -86,7 +90,7 @@ class AlphaBetaSearch(SearchAlgorithm):
             min_eval = float('inf')
             for move in board.legal_moves:
                 board.push(move)
-                eval = self._alpha_beta(board, depth - 1, alpha, beta, True)
+                eval = self._alpha_beta(board, depth - 1, alpha, beta, True, ply_from_root + 1)
                 board.pop()
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)

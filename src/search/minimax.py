@@ -7,12 +7,13 @@ from .search_base import SearchAlgorithm
 class MiniMaxSearch(SearchAlgorithm):
     """Minimax search algorithm implementation."""
     
-    def __init__(self, evaluator: Callable[[chess.Board], int]):
+    def __init__(self, evaluator: Callable[[chess.Board, int], int]):
         """
-        Initalize minimax search.
+        Initialize minimax search.
         
         Args:
             evaluator: Function that evaluates the board state.
+                      Should accept (board, ply_from_root) parameters
         """
         super().__init__(evaluator)
     
@@ -33,7 +34,8 @@ class MiniMaxSearch(SearchAlgorithm):
         
         for move in board.legal_moves:
             board.push(move)
-            move_value = self._minimax(board, depth - 1, board.turn == chess.WHITE)
+            # Pass ply_from_root=1 since we're one ply from root
+            move_value = self._minimax(board, depth - 1, board.turn == chess.WHITE, ply_from_root=1)
             board.pop()
             
             if board.turn == chess.WHITE:
@@ -47,7 +49,7 @@ class MiniMaxSearch(SearchAlgorithm):
         
         return best_move, best_value
     
-    def _minimax(self, board: chess.Board, depth: int, maximizing: bool) -> int:
+    def _minimax(self, board: chess.Board, depth: int, maximizing: bool, ply_from_root: int) -> int:
         """
         Minimax recursive implementation.
         
@@ -55,6 +57,7 @@ class MiniMaxSearch(SearchAlgorithm):
             board: Current board state
             depth: Remaining search depth
             maximizing: True if maximizing player
+            ply_from_root: Number of plies from the root position
             
         Returns:
             int: Evaluation score
@@ -62,13 +65,14 @@ class MiniMaxSearch(SearchAlgorithm):
         self.nodes_searched += 1
         
         if depth == 0 or board.is_game_over():
-            return self.evaluator(board)
+            # Pass ply_from_root to evaluator for mate distance scoring
+            return self.evaluator(board, ply_from_root)
         
         if maximizing:
             max_eval = float('-inf')
             for move in board.legal_moves:
                 board.push(move)
-                eval = self._minimax(board, depth - 1, False)
+                eval = self._minimax(board, depth - 1, False, ply_from_root + 1)
                 board.pop()
                 max_eval = max(max_eval, eval)
             return max_eval
@@ -76,7 +80,7 @@ class MiniMaxSearch(SearchAlgorithm):
             min_eval = float('inf')
             for move in board.legal_moves:
                 board.push(move)
-                eval = self._minimax(board, depth - 1, True)
+                eval = self._minimax(board, depth - 1, True, ply_from_root + 1)
                 board.pop()
                 min_eval = min(min_eval, eval)
             return min_eval

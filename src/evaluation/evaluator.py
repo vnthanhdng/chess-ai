@@ -55,31 +55,75 @@ def get_piece_square_value(piece: chess.Piece, square: chess.Square, endgame: bo
     return table[rank][file]
 
 
-def evaluate(board: chess.Board) -> int:
+def evaluate(board: chess.Board, ply_from_root: int = 0) -> int:
     """
-    Evaluate board position.
-    
-    Returns:
-        int: Score in centipawns (positive = white advantage)
+    Improved evaluation with Draw fixes and End-game Mop-up.
     """
-    if board.is_stalemate() or board.is_insufficient_material():
-        return 0
-    
     if board.is_checkmate():
-        return -20000 if board.turn == chess.WHITE else 20000
-    
+        # Prefer faster mates: Score is higher if ply is lower
+        mate_score = 20000 - ply_from_root
+        return -mate_score if board.turn == chess.WHITE else mate_score
+
+    # Draws should be scored as 0 (Equality), not a massive penalty.
+    # If the engine is losing, 0 is better than -1000.
+    if board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
+        return 0
+
+    # Standard material + positional evaluation
     endgame = is_endgame(board)
     score = 0
     
+    # Calculate Material and PST
+    white_material = 0
+    black_material = 0
+    
     for square in chess.SQUARES:
         piece = board.piece_at(square)
-        
         if piece is not None:
-            material_value = PIECE_VALUES[piece.piece_type]
-            positional_value = get_piece_square_value(piece, square, endgame=endgame)
-            total_value = material_value + positional_value
-            score += total_value if piece.color == chess.WHITE else -total_value
+            material = PIECE_VALUES[piece.piece_type]
+            pst = get_piece_square_value(piece, square, endgame=endgame)
+            val = material + pst
+            
+            if piece.color == chess.WHITE:
+                score += val
+                white_material += material
+            else:
+                score -= val
+                black_material += material
 
+    winning_side = None
+    if white_material > black_material + 200 and endgame:
+        winning_side = chess.WHITE
+    elif black_material > white_material + 200 and endgame:
+        winning_side = chess.BLACK
+
+    if winning_side is not None:
+        mop_up_score = 0
+        cmd_king = board.king(winning_side)
+        losing_king = board.king(not winning_side)
+        
+        if cmd_king is not None and losing_king is not None:
+            # 1. Force losing King to edge (Manhattan distance from center)
+            # Center is 3.5, 3.5. 
+            losing_rank, losing_file = chess.square_rank(losing_king), chess.square_file(losing_king)
+            dist_from_center_rank = max(3 - losing_rank, losing_rank - 4)
+            dist_from_center_file = max(3 - losing_file, losing_file - 4)
+            mop_up_score += (dist_from_center_rank + dist_from_center_file) * 10
+            
+            # 2. Force winning King closer to losing King to help checkmate
+            # Use simple Chebyshev distance calculation roughly
+            rank_diff = abs(chess.square_rank(cmd_king) - losing_rank)
+            file_diff = abs(chess.square_file(cmd_king) - losing_file)
+            distance_between_kings = rank_diff + file_diff
+            mop_up_score += (14 - distance_between_kings) * 5
+
+            if winning_side == chess.WHITE:
+                score += mop_up_score
+            else:
+                score -= mop_up_score
+
+    # Return perspective-based score for Negamax, or absolute for Minimax
+    # Assuming this function returns "White's Advantage":
     return score
 
 
