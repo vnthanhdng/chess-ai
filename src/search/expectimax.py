@@ -51,8 +51,9 @@ class ExpectimaxSearch(SearchAlgorithm):
         # 2. Quiescence at depth 0
         if depth == 0:
             # We determine if the board is 'stable' using rational exchanges
-            # Use local alpha/beta for efficiency
-            return self._quiescence(board, float('-inf'), float('inf'), agent_color == chess.WHITE, ply_from_root)
+            # Pass the correct `maximizing` flag based on whose turn it is
+            # relative to the agent color (board.turn == agent_color).
+            return self._quiescence(board, float('-inf'), float('inf'), board.turn == agent_color, ply_from_root)
         
         # Chance node (Opponent)
         if is_chance_node:
