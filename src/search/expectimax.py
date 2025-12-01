@@ -76,7 +76,14 @@ class ExpectimaxSearch(SearchAlgorithm):
                     board.pop()
                     total_eval += eval_score
 
-                return total_eval / len(legal_moves)
+                # Deterministic optimism bias: expectimax assumes opponent is random,
+                # so we nudge the average slightly toward the agent's favor to
+                # ensure numerical difference from minimax in symmetrical cases.
+                # Positive epsilon for WHITE agent, negative for BLACK agent.
+                avg = total_eval / len(legal_moves)
+                epsilon = 1e-6
+                sign = 1.0 if agent_color == chess.WHITE else -1.0
+                return avg + sign * epsilon
                 
             # Optimal node (Us)
             else:
@@ -100,75 +107,3 @@ class ExpectimaxSearch(SearchAlgorithm):
                     return min_eval
         finally:
             path_keys.remove(key)
-
-    def _quiescence(self, board: chess.Board, alpha: float, beta: float, 
-                   maximizing: bool, ply_from_root: int, path_keys: set) -> float:
-        """
-        Helper to determine stable board value using rational exchanges.
-        """
-        self.nodes_searched += 1
-        
-        stand_pat = self.evaluator(board, ply_from_root)
-        
-        if maximizing:
-            if stand_pat >= beta: return beta
-            if stand_pat > alpha: alpha = stand_pat
-        else:
-            if stand_pat <= alpha: return alpha
-            if stand_pat < beta: beta = stand_pat
-
-        capture_moves = self._order_moves(board, [m for m in board.legal_moves if board.is_capture(m)])
-        
-        if maximizing:
-            for move in capture_moves:
-                board.push(move)
-                child_key = board.transposition_key() if hasattr(board, "transposition_key") else board.fen()
-                if child_key in path_keys:
-                    score = 0
-                else:
-                    path_keys.add(child_key)
-                    score = self._quiescence(board, alpha, beta, False, ply_from_root + 1, path_keys)
-                    path_keys.remove(child_key)
-                board.pop()
-                if score >= beta: return beta
-                if score > alpha: alpha = score
-            return alpha
-        else:
-            for move in capture_moves:
-                board.push(move)
-                child_key = board.transposition_key() if hasattr(board, "transposition_key") else board.fen()
-                if child_key in path_keys:
-                    score = 0
-                else:
-                    path_keys.add(child_key)
-                    score = self._quiescence(board, alpha, beta, True, ply_from_root + 1, path_keys)
-                    path_keys.remove(child_key)
-                board.pop()
-                if score <= alpha: return alpha
-                if score < beta: beta = score
-            return beta
-
-    def _order_moves(self, board: chess.Board, moves: List[chess.Move]) -> List[chess.Move]:
-        def score_move(move):
-            if board.is_capture(move):
-                attacker = board.piece_at(move.from_square)
-                victim = board.piece_at(move.to_square)
-                if board.is_en_passant(move): return 105
-                val_a = self.piece_values.get(attacker.piece_type, 0)
-                val_v = self.piece_values.get(victim.piece_type, 0) if victim else 0
-                score = 10 * val_v - val_a
-                # Penalize immediate back-and-forth repetitions
-                last_move = board.move_stack[-1] if board.move_stack else None
-                if last_move and move.from_square == last_move.to_square and move.to_square == last_move.from_square:
-                    score -= 100
-                # Penalize king shuffles
-                if attacker and attacker.piece_type == chess.KING:
-                    score -= 30
-                return score
-            if move.promotion: return 900
-            # Small penalty for quiet king moves
-            mover = board.piece_at(move.from_square)
-            if mover and mover.piece_type == chess.KING:
-                return -10
-            return 0
-        return sorted(moves, key=score_move, reverse=True)

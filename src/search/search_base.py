@@ -63,3 +63,136 @@ class SearchAlgorithm(ABC):
     def reset_stats(self):
         """Reset search statistics."""
         self.nodes_searched = 0
+
+    # Default piece values used for MVV-LVA if subclass doesn't provide one
+    DEFAULT_PIECE_VALUES = {
+        chess.PAWN: 100,
+        chess.KNIGHT: 320,
+        chess.BISHOP: 330,
+        chess.ROOK: 500,
+        chess.QUEEN: 900,
+        chess.KING: 20000,
+    }
+
+    def _order_moves(self, board: chess.Board, moves: list, *, for_chance: bool = False, for_quiescence: bool = False) -> list:
+        """Default move ordering (MVV-LVA + promotions + light penalties).
+
+        Args:
+            board: current board
+            moves: iterable of moves to order
+            for_chance: if True, ordering is light (cheap) because chance
+                        nodes average outcomes and ordering has less impact
+            for_quiescence: if True, ordering is tuned for quiescence (captures)
+        """
+        piece_values = getattr(self, 'piece_values', self.DEFAULT_PIECE_VALUES)
+
+        def score_move(move: chess.Move) -> int:
+            # High priority: captures (MVV-LVA)
+            if board.is_capture(move):
+                attacker = board.piece_at(move.from_square)
+                victim = board.piece_at(move.to_square)
+                if board.is_en_passant(move):
+                    base = 105
+                else:
+                    val_a = piece_values.get(attacker.piece_type, 0) if attacker else 0
+                    val_v = piece_values.get(victim.piece_type, 0) if victim else 0
+                    base = 10 * val_v - val_a
+
+                # Penalize immediate back-and-forth repetitions (ping-pong)
+                last_move = board.move_stack[-1] if board.move_stack else None
+                if last_move and move.from_square == last_move.to_square and move.to_square == last_move.from_square:
+                    base -= 100
+
+                # Penalize king captures/shuffles a bit to avoid meaningless king moves
+                if attacker and attacker.piece_type == chess.KING:
+                    base -= 30
+                return base
+
+            # Promotions are valuable
+            if move.promotion:
+                return 900
+
+            # Quiet moves: small bonuses for pawn pushes, penalties for king moves
+            mover = board.piece_at(move.from_square)
+            score = 0
+            if mover and mover.piece_type == chess.PAWN:
+                # Encourage pawn advances (small)
+                score += 5
+            if mover and mover.piece_type == chess.KING:
+                score -= 10
+
+            # If this ordering is for chance nodes, keep it cheap and shallow
+            if for_chance:
+                return score
+
+            return score
+
+        # Convert to list and sort once
+        moves_list = list(moves)
+        moves_list.sort(key=score_move, reverse=True)
+        return moves_list
+
+    def _quiescence(self, board: chess.Board, alpha: float, beta: float, maximizing: bool, ply_from_root: int, path_keys: set) -> float:
+        """Default quiescence search: search captures until quiet.
+
+        Accepts `path_keys` to avoid cycles on the current search path.
+        """
+        self.nodes_searched += 1
+
+        # Repetition check for quiescence children
+        key = board.transposition_key() if hasattr(board, 'transposition_key') else board.fen()
+        if key in path_keys:
+            return 0
+
+        path_keys.add(key)
+        try:
+            stand_pat = self.evaluator(board, ply_from_root)
+
+            if maximizing:
+                if stand_pat >= beta:
+                    return beta
+                if stand_pat > alpha:
+                    alpha = stand_pat
+            else:
+                if stand_pat <= alpha:
+                    return alpha
+                if stand_pat < beta:
+                    beta = stand_pat
+
+            # Only consider capture moves in quiescence
+            capture_moves = self._order_moves(board, [m for m in board.legal_moves if board.is_capture(m)], for_quiescence=True)
+
+            if maximizing:
+                for move in capture_moves:
+                    board.push(move)
+                    child_key = board.transposition_key() if hasattr(board, 'transposition_key') else board.fen()
+                    if child_key in path_keys:
+                        score = 0
+                    else:
+                        path_keys.add(child_key)
+                        score = self._quiescence(board, alpha, beta, False, ply_from_root + 1, path_keys)
+                        path_keys.remove(child_key)
+                    board.pop()
+                    if score >= beta:
+                        return beta
+                    if score > alpha:
+                        alpha = score
+                return alpha
+            else:
+                for move in capture_moves:
+                    board.push(move)
+                    child_key = board.transposition_key() if hasattr(board, 'transposition_key') else board.fen()
+                    if child_key in path_keys:
+                        score = 0
+                    else:
+                        path_keys.add(child_key)
+                        score = self._quiescence(board, alpha, beta, True, ply_from_root + 1, path_keys)
+                        path_keys.remove(child_key)
+                    board.pop()
+                    if score <= alpha:
+                        return alpha
+                    if score < beta:
+                        beta = score
+                return beta
+        finally:
+            path_keys.remove(key)
