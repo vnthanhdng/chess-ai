@@ -38,3 +38,6 @@ jobs:
     
     - name: Run puzzle tests
       run: cd tests && python test_puzzles.py
+
+    - name: Run learning tests
+      run: cd tests && python test_learning.py
