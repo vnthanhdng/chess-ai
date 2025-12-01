@@ -84,53 +84,61 @@ class SearchAlgorithm(ABC):
                         nodes average outcomes and ordering has less impact
             for_quiescence: if True, ordering is tuned for quiescence (captures)
         """
+        # Delegate to central scoring helper which may be overridden or
+        # customized. Keep the sorting stable and inexpensive.
+        moves_list = list(moves)
+        moves_list.sort(key=lambda m: self._score_move(board, m, for_chance=for_chance, for_quiescence=for_quiescence), reverse=True)
+        return moves_list
+
+    def _score_move(self, board: chess.Board, move: chess.Move, *, for_chance: bool = False, for_quiescence: bool = False) -> int:
+        """Score a single move for ordering.
+
+        This central helper implements MVV-LVA, promotion handling, and
+        light heuristics to avoid immediate back-and-forth (ping-pong)
+        moves and to discourage king shuffles.
+        """
         piece_values = getattr(self, 'piece_values', self.DEFAULT_PIECE_VALUES)
 
-        def score_move(move: chess.Move) -> int:
-            # High priority: captures (MVV-LVA)
-            if board.is_capture(move):
-                attacker = board.piece_at(move.from_square)
-                victim = board.piece_at(move.to_square)
-                if board.is_en_passant(move):
-                    base = 105
-                else:
-                    val_a = piece_values.get(attacker.piece_type, 0) if attacker else 0
-                    val_v = piece_values.get(victim.piece_type, 0) if victim else 0
-                    base = 10 * val_v - val_a
+        # Captures: MVV-LVA with en-passant handling
+        if board.is_capture(move):
+            attacker = board.piece_at(move.from_square)
+            victim = board.piece_at(move.to_square)
 
-                # Penalize immediate back-and-forth repetitions (ping-pong)
-                last_move = board.move_stack[-1] if board.move_stack else None
-                if last_move and move.from_square == last_move.to_square and move.to_square == last_move.from_square:
-                    base -= 100
+            if board.is_en_passant(move):
+                base = 105
+            else:
+                val_a = piece_values.get(attacker.piece_type, 0) if attacker else 0
+                val_v = piece_values.get(victim.piece_type, 0) if victim else 0
+                base = 10 * val_v - val_a
 
-                # Penalize king captures/shuffles a bit to avoid meaningless king moves
-                if attacker and attacker.piece_type == chess.KING:
-                    base -= 30
-                return base
+            # Stronger penalty for immediate back-and-forth repetitions
+            last_move = board.move_stack[-1] if board.move_stack else None
+            if last_move and move.from_square == last_move.to_square and move.to_square == last_move.from_square:
+                base -= 200
 
-            # Promotions are valuable
-            if move.promotion:
-                return 900
+            # Penalize king captures/shuffles more strongly to avoid meaningless king moves
+            if attacker and attacker.piece_type == chess.KING:
+                base -= 60
 
-            # Quiet moves: small bonuses for pawn pushes, penalties for king moves
-            mover = board.piece_at(move.from_square)
-            score = 0
-            if mover and mover.piece_type == chess.PAWN:
-                # Encourage pawn advances (small)
-                score += 5
-            if mover and mover.piece_type == chess.KING:
-                score -= 10
+            return base
 
-            # If this ordering is for chance nodes, keep it cheap and shallow
-            if for_chance:
-                return score
+        # Promotions are very valuable
+        if move.promotion:
+            return 900
 
+        # Quiet moves: small bonuses for pawn pushes, penalties for king moves
+        mover = board.piece_at(move.from_square)
+        score = 0
+        if mover and mover.piece_type == chess.PAWN:
+            score += 5
+        if mover and mover.piece_type == chess.KING:
+            score -= 20
+
+        # If this ordering is for chance nodes, keep it cheap
+        if for_chance:
             return score
 
-        # Convert to list and sort once
-        moves_list = list(moves)
-        moves_list.sort(key=score_move, reverse=True)
-        return moves_list
+        return score
 
     def _quiescence(self, board: chess.Board, alpha: float, beta: float, maximizing: bool, ply_from_root: int, path_keys: set) -> float:
         """Default quiescence search: search captures until quiet.

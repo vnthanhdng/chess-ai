@@ -156,34 +156,5 @@ class AlphaBetaSearch(SearchAlgorithm):
             return beta
 
     def _order_moves(self, board: chess.Board, moves: List[chess.Move]) -> List[chess.Move]:
-        """
-        Sorts moves to improve pruning efficiency.
-        Order:
-        1. Captures (sorted by MVV-LVA: High val victim, Low val attacker)
-        2. Promotions
-        3. Quiet moves
-        """
-        def score_move(move):
-            if board.is_capture(move):
-                # MVV-LVA Logic
-                attacker_piece = board.piece_at(move.from_square)
-                victim_piece = board.piece_at(move.to_square)
-                
-                # En Passant handling
-                if board.is_en_passant(move):
-                    return 105 # Higher than pawn captures pawn
-                
-                attacker_val = self.piece_values.get(attacker_piece.piece_type, 0)
-                victim_val = 0
-                if victim_piece:
-                    victim_val = self.piece_values.get(victim_piece.piece_type, 0)
-                
-                # Formula: Prioritize taking valuable pieces with cheap pieces
-                return 10 * victim_val - attacker_val
-                
-            if move.promotion:
-                return 900 # High priority
-                
-            return 0 # Quiet moves last
-
-        return sorted(moves, key=score_move, reverse=True)
+        # Delegate to shared ordering in SearchAlgorithm
+        return super()._order_moves(board, moves)

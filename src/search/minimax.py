@@ -109,14 +109,4 @@ class MiniMaxSearch(SearchAlgorithm):
             return beta
 
     def _order_moves(self, board: chess.Board, moves: List[chess.Move]) -> List[chess.Move]:
-        def score_move(move):
-            if board.is_capture(move):
-                attacker = board.piece_at(move.from_square)
-                victim = board.piece_at(move.to_square)
-                if board.is_en_passant(move): return 105
-                val_a = self.piece_values.get(attacker.piece_type, 0)
-                val_v = self.piece_values.get(victim.piece_type, 0) if victim else 0
-                return 10 * val_v - val_a
-            if move.promotion: return 900
-            return 0
-        return sorted(moves, key=score_move, reverse=True)
+        return super()._order_moves(board, moves)
