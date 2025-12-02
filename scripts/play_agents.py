@@ -11,11 +11,10 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.agents.base_agent import BaseAgent
-from scripts.agent_utils import create_agent, play_game as play_game_simple
-from src.evaluation import evaluate
+from scripts.agent_utils import create_agent, play_game as play_game_simple, play_single_game_with_stats
 
 
-def play_single_game(white_agent: BaseAgent, black_agent: BaseAgent, timeout_seconds: int = 120):
+def play_single_game(white_agent: BaseAgent, black_agent: BaseAgent, timeout_seconds: int = 600):
     return play_game_simple(white_agent, black_agent, timeout_seconds)
 
 
@@ -30,7 +29,7 @@ def make_agents_play(white_agent: BaseAgent, black_agent: BaseAgent, iterations:
         white_agent.reset_stats()
         black_agent.reset_stats()
 
-        result, w_avg, b_avg = play_single_game(white_agent, black_agent)
+        result, w_avg, b_avg = play_single_game_with_stats(white_agent, black_agent)
         results[result] = results.get(result, 0) + 1
         w_times.append(w_avg)
         b_times.append(b_avg)
@@ -38,6 +37,7 @@ def make_agents_play(white_agent: BaseAgent, black_agent: BaseAgent, iterations:
         print(f"Result: {result}")
         print(f"  White ({white_agent}): avg move time {w_avg:.4f}s")
         print(f"  Black ({black_agent}): avg move time {b_avg:.4f}s")
+    
 
     print("\n=== Summary ===")
     print(results)

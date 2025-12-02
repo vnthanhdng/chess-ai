@@ -1,131 +1,43 @@
+"""
+Lightweight agent-versus-agent runner using shared utilities.
+
+This script used to duplicate play/timing logic; it now delegates to
+`scripts.agent_utils` to keep behavior consistent with other scripts.
+"""
 import argparse
 import chess
-import time
-from src.agents.base_agent import BaseAgent
-from src.agents import MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent
-from evaluation import evaluate
+from scripts.agent_utils import create_agent, play_single_game_with_stats
 
 
-def play_single_game(white_agent: BaseAgent, black_agent: BaseAgent, timeout_seconds: int = 120):
-    """
-    Play one game between agents with a hard timeout and move-time tracking.
-    Returns:
-        result (str): "white", "black", "draw", or "timeout"
-        white_avg (float)
-        black_avg (float)
-    """
-    board = chess.Board()
+def main():
+    parser = argparse.ArgumentParser(description="Play games between two agents")
+    parser.add_argument("--white-agent", default="minimax", help="Agent key for White")
+    parser.add_argument("--black-agent", default="alphabeta", help="Agent key for Black")
+    parser.add_argument("--depth", type=int, default=3, help="Default search depth for search agents")
+    parser.add_argument("--num-games", type=int, default=1, help="Number of games to run")
+    parser.add_argument("--vi-iterations", type=int, default=3, help="ValueIteration iterations")
+    parser.add_argument("--q-train", type=int, default=0, help="QLearning training episodes")
+    parser.add_argument("--q-epsilon", type=float, default=0.0, help="QLearning epsilon during matches")
+    args = parser.parse_args()
+
+    white = create_agent(args.white_agent, chess.WHITE, depth=args.depth, vi_iterations=args.vi_iterations, q_numTraining=args.q_train, q_epsilon=args.q_epsilon)
+    black = create_agent(args.black_agent, chess.BLACK, depth=args.depth, vi_iterations=args.vi_iterations, q_numTraining=args.q_train, q_epsilon=args.q_epsilon)
+
+    print(f"Running {args.num_games} games: White={white}, Black={black}")
 
     white_times = []
     black_times = []
 
-    start_game_time = time.time()
-
-    while not board.is_game_over():
-        # Hard 2 minute timeout
-        if time.time() - start_game_time > timeout_seconds:
-            print("Game terminated due to timeout.")
-            return "timeout", 0, 0
-
-        current_agent = white_agent if board.turn == chess.WHITE else black_agent
-
-        move_start = time.time()
-        print(f"{current_agent}")
-        move = current_agent.choose_move(board)
-        move_end = time.time()
-
-        if move is None:
-            print("Error: Agent returned None move.")
-            return "error", 0, 0
-
-        # Track move time
-        if board.turn == chess.WHITE:
-            white_times.append(move_end - move_start)
-        else:
-            black_times.append(move_end - move_start)
-
-        board.push(move)
-
-    # Compute averages
-    white_avg = sum(white_times) / len(white_times) if white_times else 0
-    black_avg = sum(black_times) / len(black_times) if black_times else 0
-
-    # Determine outcome
-    if board.is_checkmate():
-        winner = "white" if board.turn == chess.BLACK else "black"
-    else:
-        winner = "draw"
-
-    return winner, white_avg, black_avg
+    for i in range(1, args.num_games + 1):
+        print(f"\n=== Game {i}/{args.num_games} ===")
+        result = play_single_game_with_stats(white, black)
+        print(f"Result: {result}")
 
 
-def make_agents_play(white_agent: BaseAgent, black_agent: BaseAgent, iterations: int):
-    """
-    Run `iterations` number of games and report average move times.
-    """
-    white_avg_list = []
-    black_avg_list = []
-
-    for game_idx in range(1, iterations + 1):
-        print(f"\n=== Starting Game {game_idx}/{iterations} ===")
-        result, w_avg, b_avg = play_single_game(white_agent, black_agent)
-
-        print(f"Game {game_idx} result: {result}")
-        print(f"  White ({white_agent.name}) avg move time: {w_avg:.4f} sec")
-        print(f"  Black({black_agent.name}) avg move time: {b_avg:.4f} sec")
-
-        white_avg_list.append(w_avg)
-        black_avg_list.append(b_avg)
-
-    print("\n===== FINAL RESULTS ACROSS ALL GAMES =====")
-    print(f"{white_agent.name} mean move time: {sum(white_avg_list)/iterations:.4f} sec")
-    print(f"{black_agent.name} mean move time: {sum(black_avg_list)/iterations:.4f} sec")
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Play chess with agents")
-    parser.add_argument(
-        "--white-agent",
-        choices=["minimax", "alphabeta", "expectimax"],
-        default="minimax",
-    )
-    parser.add_argument(
-        "--black-agent",
-        choices=["minimax", "alphabeta", "expectimax"],
-        default="alphabeta",
-    )
-    parser.add_argument(
-        "--depth",
-        type=int,
-        default=3,
-        choices=[2, 3, 4, 5],
-        help="Search depth for AI agents (default: 3)",
-    )
-    parser.add_argument(
-        "--num-games",
-        type=int,
-        default=1,
-        help="Number of games to run (default: 1)"
-    )
-    args = parser.parse_args()
-
-    def create_agent(agent_type, color):
-        if agent_type == "minimax":
-            return MinimaxAgent(evaluate, depth=args.depth, name="Minimax", color=color)
-        elif agent_type == "alphabeta":
-            return AlphaBetaAgent(evaluate, depth=args.depth, name="AlphaBeta", color=color)
-        elif agent_type == "expectimax":
-            return ExpectimaxAgent(evaluate, depth=args.depth, name="Expectimax", color=color)
-        raise RuntimeError("Invalid agent type")
-
-    white_agent = create_agent(args.white_agent, chess.WHITE)
-    black_agent = create_agent(args.black_agent, chess.BLACK)
-
-    print(f"Running {args.num_games} games:")
-    print(f"  White = {white_agent.name}")
-    print(f"  Black = {black_agent.name}")
-
-    make_agents_play(white_agent, black_agent, iterations=args.num_games)
+    if white_times:
+        print(f"\nWhite mean move time: {sum(white_times)/len(white_times):.4f}s")
+    if black_times:
+        print(f"Black mean move time: {sum(black_times)/len(black_times):.4f}s")
 
 
 if __name__ == "__main__":

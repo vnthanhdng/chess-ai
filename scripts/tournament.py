@@ -12,26 +12,12 @@ import argparse
 from pathlib import Path
 import sys
 import chess
-import random
-import time
 
 project_root = Path(__file__).resolve().parents[1]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.agents import (
-    MinimaxAgent,
-    AlphaBetaAgent,
-    ExpectimaxAgent,
-    RandomAgent,
-    SimpleAgent,
-    QLearningAgent,
-    ValueIterationAgent,
-)
-from src.evaluation import evaluate
-
-
-from scripts.agent_utils import create_agent
+from scripts.agent_utils import create_agent, play_game
 
 # Supported agent keys
 SUPPORTED_AGENT_KEYS = [
@@ -59,23 +45,7 @@ def update_elo(r_a: float, r_b: float, score_a: float, k: float) -> tuple[float,
     return r_a_new, r_b_new
 
 
-def play_game(white_agent, black_agent, timeout_seconds: int = 600):
-    board = chess.Board()
-    start_time = time.time()
-
-    while not board.is_game_over():
-        if time.time() - start_time > timeout_seconds:
-            return "timeout"
-
-        current = white_agent if board.turn == chess.WHITE else black_agent
-        move = current.select_move(board)
-        if move is None:
-            return "error"
-        board.push(move)
-
-    if board.is_checkmate():
-        return "white" if board.turn == chess.BLACK else "black"
-    return "draw"
+# use shared play_game from scripts.agent_utils
 
 
 def run_tournament(agent_keys, games_per_pair=2, k=20, *, depth=2, q_numTraining=0, q_epsilon=0.0, vi_iterations=3, depths_map=None):
