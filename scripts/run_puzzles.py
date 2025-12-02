@@ -15,13 +15,14 @@ Usage:
 import argparse
 import sys
 from pathlib import Path
+import chess
 
 # Add project root to path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.puzzles import PuzzleLoader, PuzzleEvaluator
-from src.agents import MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent
+from src.agents import MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent, QLearningAgent, ValueIterationAgent
 from src.evaluation import evaluate
 
 
@@ -32,16 +33,16 @@ def main():
         epilog="""
 Examples:
   # Evaluate all agents on 100 medium difficulty puzzles at depth 3
-  python scripts/evaluate_puzzles.py
+  python scripts/run_puzzles.py
   
   # Test with deeper search
-  python scripts/evaluate_puzzles.py --depth 4 --num-puzzles 50
+  python scripts/run_puzzles.py --depth 4 --num-puzzles 50
   
   # Focus on mate-in-2 puzzles
-  python scripts/evaluate_puzzles.py --theme mateIn2 --depth 3
+  python scripts/run_puzzles.py --theme mateIn2 --depth 3
   
   # Test on harder puzzles
-  python scripts/evaluate_puzzles.py --rating-min 1600 --rating-max 2000
+  python scripts/run_puzzles.py --rating-min 1600 --rating-max 2000
         """
     )
     
@@ -86,11 +87,11 @@ Examples:
     parser.add_argument(
         "--agents",
         nargs="+",
-        choices=["minimax", "alphabeta", "expectimax", "all"],
-        default=["all"],
-        help="Which agents to test (default: all)"
+        choices=["minimax", "alphabeta", "expectimax", "qlearning", "valueiteration", "random", "all"],
+        default=["alphabeta", "expectimax"],
+        help="Agents to evaluate (default: alphabeta expectimax)"
     )
-    
+
     # Output options
     parser.add_argument(
         "--verbose",
@@ -110,9 +111,7 @@ Examples:
     
     args = parser.parse_args()
     
-    # =====================================================================
-    # STEP 1: Load puzzles from CSV
-    # =====================================================================
+    # Load puzzles from csv w puzzle loader from Van
     print("\n" + "=" * 70)
     print("CHESS PUZZLE EVALUATION")
     print("=" * 70)
@@ -157,12 +156,10 @@ Examples:
     print(f"  Themes: {', '.join(sample.themes[:5])}")
     print(f"  Moves: {' '.join(sample.moves)}")
     
-    # =====================================================================
-    # STEP 2: Create agents to test
-    # =====================================================================
+    # Load in the agents
     agent_types = args.agents
     if "all" in agent_types:
-        agent_types = ["minimax", "alphabeta", "expectimax"]
+        agent_types = ["minimax", "alphabeta", "expectimax", "qlearning", "valueiteration", "random"]
     
     agents = []
     for agent_type in agent_types:
@@ -182,21 +179,30 @@ Examples:
             agents.append(ExpectimaxAgent(
                 evaluate,
                 depth=args.depth,
-                name=f"Expectimax-d{args.depth}",
+                name=f"Expectimax-d{args.depth}"
             ))
-    
+        elif agent_type == "qlearning":
+            agents.append(QLearningAgent(
+                name="QLearning",
+                color=chess.BLACK
+            ))
+        elif agent_type == "valueiteration":
+            agents.append(ValueIterationAgent(
+                discount=0.9,
+                iterations=3,
+                name="ValueIteration",
+                color=chess.BLACK
+            ))
+        
     print(f"\nAgents to test: {', '.join(a.name for a in agents)}")
     
-    # =====================================================================
-    # STEP 3: Evaluate each agent on the puzzle set
-    # =====================================================================
+
+    # evaluate w puzzle evaluator from Van
     evaluator = PuzzleEvaluator(verbose=args.verbose)
     reports = evaluator.compare_agents(agents, puzzles, depth=args.depth)
     
-    # =====================================================================
-    # STEP 4: Additional analysis and reporting
-    # =====================================================================
-    
+
+    # Some analysis for the report 
     # Show failed puzzles if requested
     if args.show_failures:
         for agent_name, report in reports.items():
@@ -234,9 +240,9 @@ Examples:
                           f"{subset.solved}/{subset.total_puzzles} solved "
                           f"({subset.solve_rate:.1f}%)")
     
-    # =====================================================================
-    # STEP 5: Summary and recommendations
-    # =====================================================================
+  
+    # Summary
+
     print("\n" + "=" * 70)
     print("EVALUATION COMPLETE")
     print("=" * 70)
