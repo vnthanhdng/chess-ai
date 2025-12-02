@@ -168,7 +168,7 @@ def get_piece_square_value(piece: chess.Piece, square: chess.Square, endgame=Fal
     return value
 
 
-def evaluate(board: chess.Board) -> int:
+def evaluate(board: chess.Board, ply: int = 0) -> int:
     """
     Evaluate the current board position.
     
@@ -182,8 +182,10 @@ def evaluate(board: chess.Board) -> int:
         return 0 # zero sum -> draw
     
     # Check for game ending condition
+    # Prefer faster mates by reducing the magnitude with ply distance
     if board.is_checkmate():
-        return -20000 if board.turn == chess.WHITE else 20000
+        mate_score = 20000 - ply
+        return -mate_score if board.turn == chess.WHITE else mate_score
     
     engame = is_endgame(board)
     score = 0
