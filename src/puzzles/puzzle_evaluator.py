@@ -260,6 +260,10 @@ class PuzzleEvaluator:
                 puzzle=puzzle,
                 solved=False,
                 agent_move=None,
+
+                # VIVIAN added these two lines
+                eval_score=None,  
+                nodes_searched=0,
                 correct_move=correct_move_uci,
                 time_taken=0.0,
                 depth=depth
