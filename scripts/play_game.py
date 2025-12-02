@@ -10,7 +10,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.agents import HumanAgent
-from src.agents import AlphaBetaAgent
+from src.agents import AlphaBetaAgent, MinimaxAgent, ExpectimaxAgent, RandomAgent, SimpleAgent, QLearningAgent, ValueIterationAgent
 from src.evaluation import evaluate
 
 
@@ -92,6 +92,36 @@ def print_game_result(board: chess.Board, white_agent, black_agent) -> None:
     print("\n" + "=" * 50 + "\n")
 
 
+def get_agent_choice() -> str:    
+    """
+    Prompt user for agent choice.
+    
+    Returns:
+        str: Agent type chosen
+    """
+    print("\nChoose AI agent type:")
+    print("  1. Minimax")
+    print("  2. Alpha-Beta Pruning")
+    print("  3. Expectimax")
+    print("  4. Random")
+    print("  5. Simple Heuristic")
+    print("  6. Q-Learning")
+    print("  7. Value Iteration")
+    agent_map = {
+        '1': 'minimax',
+        '2': 'alphabeta',
+        '3': 'expectimax',
+        '4': 'random',
+        '5': 'simple',
+        '6': 'qlearning',
+        '7': 'valueiteration'
+    }
+    while True:
+        choice = input("> ").strip()
+        if choice in agent_map:
+            return agent_map[choice]
+        print("Invalid choice. Please enter a number from 1 to 7.")
+
 def get_difficulty_settings() -> tuple[int, str]:
     """
     Prompt user for difficulty level.
@@ -136,13 +166,53 @@ def play_game():
     
     # Create agents
     human = HumanAgent(name="You", color=chess.WHITE)
-    ai = AlphaBetaAgent(
-        evaluator=evaluate,
-        depth=ai_depth,
-        name=f"AI ({difficulty_name})",
-        color=chess.BLACK
-    )
     
+    agent_choice = get_agent_choice()
+    
+    if agent_choice == 'minimax':
+        ai = MinimaxAgent(
+            evaluator=evaluate,
+            depth=ai_depth,
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    elif agent_choice == 'alphabeta':
+        ai = AlphaBetaAgent(
+            evaluator=evaluate,
+            depth=ai_depth,
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    elif agent_choice == 'expectimax':
+        ai = ExpectimaxAgent(
+            evaluator=evaluate,
+            depth=ai_depth,
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    elif agent_choice == 'random':
+        ai = RandomAgent(
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    elif agent_choice == 'simple':
+        ai = SimpleAgent(
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    elif agent_choice == 'qlearning':
+        ai = QLearningAgent(
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    elif agent_choice == 'valueiteration':
+        ai = ValueIterationAgent(
+            name=f"AI ({difficulty_name})",
+            color=chess.BLACK
+        )
+    else:
+        print("Invalid agent choice. Exiting.")
+        return    
     print(f"\nStarting game: {human} vs {ai}")
     print("=" * 50)
     
@@ -200,14 +270,17 @@ def play_game():
                 print("\nAI resigns. You win!")
                 break
             
-            # Get search info
-            search_info = current_agent.get_search_info()
+            # Get search info (some agents may not provide this)
+            search_info = current_agent.get_search_info() if hasattr(current_agent, 'get_search_info') else None
+            nodes_searched = 0
+            if isinstance(search_info, dict):
+                nodes_searched = search_info.get('nodes_searched', 0)
+
             move_str = board.san(move)
-            
             board.push(move)
-            
+
             print(f"\r→ {current_agent.name} played: {move_str}")
-            print(f"  (searched {search_info['nodes_searched']:,} nodes in {elapsed:.2f}s)")
+            print(f"  (searched {nodes_searched:,} nodes in {elapsed:.2f}s)")
             print()
             
             move_number += 1

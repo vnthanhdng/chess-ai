@@ -144,3 +144,58 @@ class BaseAgent(ABC):
         return f"{self.__class__.__name__}(name='{self.name}', color={self.color})"
 
 
+class RandomAgent(BaseAgent):
+    """Agent that selects moves randomly."""
+    
+    def __init__(self, name: str = "RandomAgent", color: chess.Color = chess.BLACK):
+        """Initialize Random agent.
+        
+        Args:
+            name: Agent name
+            color: Color the agent plays
+        """
+        super().__init__(name, color)
+    
+    def choose_move(self, board: chess.Board) -> Optional[chess.Move]:
+        """Choose a random legal move.
+        
+        Args:
+            board: Current board state
+            
+        Returns:
+            The chosen move, or None if no legal moves available
+        """
+        import random
+        
+        legal_moves = list(board.legal_moves)
+        if not legal_moves:
+            return None
+        
+        return random.choice(legal_moves)
+
+class SimpleAgent(BaseAgent):
+    """Agent that selects the first legal move available."""
+    
+    def __init__(self, name: str = "SimpleAgent", color: chess.Color = chess.BLACK):
+        """Initialize Simple agent.
+        
+        Args:
+            name: Agent name
+            color: Color the agent plays
+        """
+        super().__init__(name, color)
+    
+    def choose_move(self, board: chess.Board) -> Optional[chess.Move]:
+        """Choose the first legal move available.
+        
+        Args:
+            board: Current board state
+            
+        Returns:
+            The chosen move, or None if no legal moves available
+        """
+        legal_moves = list(board.legal_moves)
+        if not legal_moves:
+            return None
+        
+        return legal_moves[0]

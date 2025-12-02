@@ -1,5 +1,5 @@
 """Chess agents module."""
-from .base_agent import BaseAgent
+from .base_agent import BaseAgent, RandomAgent, SimpleAgent
 from .human_agent import HumanAgent
 from .search_agent import SearchAgent, MinimaxAgent, AlphaBetaAgent, ExpectimaxAgent
 from .learning_agent import ReinforcementAgent
@@ -13,6 +13,8 @@ __all__ = [
     'MinimaxAgent',
     'AlphaBetaAgent',
     'ExpectimaxAgent',
+    'RandomAgent',
+    'SimpleAgent',
     'ValueIterationAgent',
     'ReinforcementAgent',
     'QLearningAgent'
