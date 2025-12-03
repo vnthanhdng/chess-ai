@@ -12,6 +12,15 @@ class QLearningAgent(ReinforcementAgent):
     def __init__(self, **args):
         ReinforcementAgent.__init__(self, **args)
         self.q_values = defaultdict(float)
+        
+        self.training_history = {
+            'episode': [],
+            'win_rate': [],
+            'avg_game_length': [],
+            'total_reward': [],
+            'q_value_size': [],
+        }
+        
         self.train()
 
     def choose_move(self, board: chess.Board) -> chess.Move:
@@ -139,10 +148,16 @@ class QLearningAgent(ReinforcementAgent):
         """
         Train a QLearning agent against an opponent making random moves
         """
-        for _ in range(self.numTraining):
+        recent_results = []  # Track last 10 games
+        
+        for episode in range(self.numTraining):
             board = chess.Board()
+            game_length = 0
+            episode_reward = 0
+            
             self.startEpisode()
             while not board.is_game_over():
+                game_length += 1
                 if board.turn == self.color:
                     state = board.copy()
                     action = self.getAction(state)
@@ -150,9 +165,32 @@ class QLearningAgent(ReinforcementAgent):
                     board.push(action)
                     nextState = board
                     reward = evaluate(nextState) - evaluate(state)
+                    episode_reward += reward
                     self.observeTransition(state, action, nextState, reward)
                 else:
                     opp_moves = list(board.legal_moves)
                     if opp_moves:
                         board.push(random.choice(opp_moves))
+            
             self.final(board)
+            
+            # Track result
+            if board.is_checkmate():
+                result = 1 if board.turn != self.color else 0
+            else:
+                result = 0.5
+            recent_results.append(result)
+            if len(recent_results) > 10:
+                recent_results.pop(0)
+            
+            # NEW: Log every 10 episodes
+            if episode % 10 == 0:
+                self.training_history['episode'].append(episode)
+                self.training_history['win_rate'].append(sum(recent_results) / len(recent_results))
+                self.training_history['avg_game_length'].append(game_length)
+                self.training_history['total_reward'].append(episode_reward)
+                self.training_history['q_value_size'].append(len(self.q_values))
+    
+    def get_training_history(self):
+        """Return training history for plotting"""
+        return self.training_history
