@@ -250,6 +250,7 @@ class PuzzleEvaluator:
         
         # Time the move selection
         start_time = time.time()
+        agent.startEpisode()
         try:
             move = agent.choose_move(board)
             time_taken = time.time() - start_time
@@ -285,7 +286,7 @@ class PuzzleEvaluator:
                 board.pop()
             except:
                 pass
-        
+        agent.stopEpisode()
         return PuzzleResult(
             puzzle=puzzle,
             solved=solved,

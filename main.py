@@ -126,6 +126,7 @@ def play_game(agent_name="alphabeta", ai_depth=3):
     print()
     
     move_number = 1
+    ai_agent.startEpisode()
     while not board.is_game_over():
         print_board(board)
         
@@ -169,7 +170,7 @@ def play_game(agent_name="alphabeta", ai_depth=3):
             stats = ai_agent.get_search_info()
             # print(f"AI searched {stats['nodes_searched']} nodes in {elapsed:.2f}s")
             move_number += 1
-    
+    ai_agent.stopEpisode()
     print_board(board)
     print("=" * 50)
     print("Game over!")

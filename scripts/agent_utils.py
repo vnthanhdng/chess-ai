@@ -54,7 +54,8 @@ def play_game(white_agent, black_agent, timeout_seconds: int = 120):
     """Play one game between two agents. Returns outcome string: 'white','black','draw','timeout','error'."""
     board = chess.Board()
     start_time = time.time()
-
+    white_agent.startEpisode()
+    black_agent.startEpisode()
     while not board.is_game_over():
         if time.time() - start_time > timeout_seconds:
             return "timeout"
@@ -64,6 +65,9 @@ def play_game(white_agent, black_agent, timeout_seconds: int = 120):
         if move is None:
             return "error"
         board.push(move)
+    
+    white_agent.stopEpisode()
+    black_agent.stopEpisode()
 
     if board.is_checkmate():
         return "white" if board.turn == chess.BLACK else "black"
