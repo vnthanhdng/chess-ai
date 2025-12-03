@@ -142,6 +142,14 @@ class BaseAgent(ABC):
     def __repr__(self) -> str:
         """Detailed representation of the agent."""
         return f"{self.__class__.__name__}(name='{self.name}', color={self.color})"
+    
+    def startEpisode():
+        """Start training episode (Used by ReinforcementAgents to meter training episodes)."""
+        pass
+
+    def stopEpisode():
+        """Stop training episode (Used by ReinforcementAgents to meter training episodes)."""
+        pass
 
 
 class RandomAgent(BaseAgent):
