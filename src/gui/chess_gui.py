@@ -15,7 +15,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.agents.base_agent import BaseAgent
-from evaluation import evaluate
+from src.evaluation import evaluate
 
 
 class ChessGUI:
@@ -677,7 +677,14 @@ def watch_agents_play(
                 gui.status_label.config(text=f"Status: {current_agent.name} played {san}")
             ))
             
+            # Small delay to show the move
             time.sleep(move_delay)
+
+            # Stop watching if a threefold repetition can be claimed (or detected)
+            # so agents don't ping-pong indefinitely in watch mode.
+            if gui.board.can_claim_threefold_repetition() or gui.board.is_repetition():
+                gui.root.after(0, lambda: gui.status_label.config(text="Status: Draw by threefold repetition"))
+                break
         
         # Game over
         if gui.board.is_checkmate():
