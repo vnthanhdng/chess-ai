@@ -62,26 +62,22 @@ class ReinforcementAgent(ValueEstimationAgent):
         self.lastAction = action
 
     def startEpisode(self):
-        """
-          Start training episode
-        """
+        """Start training episode."""
         self.lastState = None
         self.lastAction = None
         self.episodeRewards = 0.0
 
     def stopEpisode(self):
-        """
-          Stop training episode
-        """
+        """Stop training episode."""
         if self.episodesSoFar < self.numTraining:
             self.accumTrainRewards += self.episodeRewards
         else:
             self.accumTestRewards += self.episodeRewards
         self.episodesSoFar += 1
-        if self.episodesSoFar >= self.numTraining:
-            # Take off the training wheels
-            self.epsilon = 0.0    # no exploration
-            self.alpha = 0.0      # no learning
+        # if self.episodesSoFar >= self.numTraining:
+        #     # Take off the training wheels
+        #     self.epsilon = 0.0    # no exploration
+        #     self.alpha = 0.0      # no learning
     
     def isInTraining(self):
         return self.episodesSoFar < self.numTraining
