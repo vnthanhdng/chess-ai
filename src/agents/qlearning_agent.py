@@ -13,6 +13,26 @@ class QLearningAgent(ReinforcementAgent):
         ReinforcementAgent.__init__(self, **args)
         self.q_values = defaultdict(float)
         self.train()
+    
+    def train(self):
+        """
+        Train a QLearning agent against an opponent making random moves
+        """
+        for _ in range(self.numTraining):
+            board = chess.Board()
+            self.startEpisode()
+            while not board.is_game_over():
+                if board.turn == self.color:
+                    state = board.copy()
+                    action = self.getAction(state)
+                    self.doAction(state, action)
+                    board.push(action)
+                else:
+                    opp_moves = list(board.legal_moves)
+                    if opp_moves:
+                        board.push(random.choice(opp_moves))
+            self.final(board)
+
 
     def choose_move(self, board: chess.Board) -> chess.Move:
         """
@@ -24,7 +44,25 @@ class QLearningAgent(ReinforcementAgent):
         Returns:
             chess.Move: The move QLearningAgent decides upon
         """
-        return self.computeActionFromQValues(board)
+        # initiate start of episode
+        action = self.getAction(board)
+        self.doAction(board, action)
+        return action
+    
+
+    def doAction(self,state: chess.Board, action:chess.Move):
+        """
+            Called by inherited class when
+            an action is taken in a state
+        """
+        self.lastState = state
+        self.lastAction = action
+
+        nextState = self.lastState.copy()
+        nextState.push(action)
+        reward = evaluate(nextState) - evaluate(state)
+        self.observeTransition(state, action, nextState, reward)
+
 
     def getQValue(self, board: chess.Board, action: chess.Move) -> float:
         """
@@ -134,25 +172,3 @@ class QLearningAgent(ReinforcementAgent):
         """
         sample = reward + self.discount*self.computeValueFromQValues(nextBoard)
         self.q_values[(board.fen(), action)] = (1-self.alpha)*self.getQValue(board, action)+self.alpha*sample
-
-    def train(self):
-        """
-        Train a QLearning agent against an opponent making random moves
-        """
-        for _ in range(self.numTraining):
-            board = chess.Board()
-            self.startEpisode()
-            while not board.is_game_over():
-                if board.turn == self.color:
-                    state = board.copy()
-                    action = self.getAction(state)
-                    self.doAction(state, action)
-                    board.push(action)
-                    nextState = board
-                    reward = evaluate(nextState) - evaluate(state)
-                    self.observeTransition(state, action, nextState, reward)
-                else:
-                    opp_moves = list(board.legal_moves)
-                    if opp_moves:
-                        board.push(random.choice(opp_moves))
-            self.final(board)
